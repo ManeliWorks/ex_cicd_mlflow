@@ -1,0 +1,13 @@
+# Python Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.swp
+
+# Virtual Environment
+venv/
+env/
+.venv/
+.env/
