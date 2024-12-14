@@ -106,8 +106,8 @@ def register():
         if User.query.filter_by(email=email).first():
             flash("Email already registered, please use a different one.", "danger")
             return redirect(url_for("register"))
-
-        new_user = User(fullname=fullname, username=username, email=email, password=password)
+        password_hash = generate_password_hash(password)
+        new_user = User(fullname=fullname, username=username, email=email, password=password_hash)
         db.session.add(new_user)
         db.session.commit()
 
