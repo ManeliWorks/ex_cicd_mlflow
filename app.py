@@ -2,7 +2,7 @@
 from flask import Flask, request, render_template, url_for, redirect, flash # for app
 from flask_sqlalchemy import SQLAlchemy # for database
 from flask_wtf import FlaskForm # for input data
-from wtforms import StringField, PasswordField, SubmitField, # take this data as form
+from wtforms import StringField, PasswordField, SubmitField # take this data as form
 from wtforms.validators import DataRequired, Regexp, Length, Email
 from flask_wtf.csrf import CSRFProtect # for url security
 from werkzeug.security import generate_password_hash, check_password_hash # for password security
