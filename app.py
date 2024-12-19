@@ -1,15 +1,14 @@
 # libraries
-from flask import Flask, request, render_template, url_for, redirect, flash # for app
+from flask import Flask, render_template, url_for, redirect, flash # for app
 from flask_sqlalchemy import SQLAlchemy # for database
 from flask_wtf import FlaskForm # for input data
-from wtforms import StringField, PasswordField, SubmitField # take this data as form
+from wtforms import StringField, PasswordField, SubmitField, FloatField, SelectField
 from wtforms.validators import DataRequired, Regexp, Length, Email
 from flask_wtf.csrf import CSRFProtect # for url security
 from werkzeug.security import generate_password_hash, check_password_hash # for password security
-from werkzeug.utils import secure_filename
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user # user session management
-import uuid
 import os
+from datetime import datetime
 
 
 # app setup
@@ -39,14 +38,26 @@ class User(db.Model, UserMixin):
     fullname = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    # result = db.relationship("userResult", backref='author', lazy=True)
+    result = db.relationship("userResult", backref='author', lazy=True)
 
-    def __init__(self, fullname, username, email, password):
-        self.fullname = fullname
-        self.username = username
-        self.email = email
-        self.password = generate_password_hash(password)  
 
+
+class userResult(db.Model):
+    __tablename__ = "user_result"
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    color = db.Column(db.String(100), nullable=False)
+    cut = db.Column(db.String(100), nullable=False)
+    clarity = db.Column(db.String(100), nullable=False)
+    carat = db.Column(db.Float, nullable=False)
+    depth = db.Column(db.Float, nullable=False)
+    table = db.Column(db.Float, nullable=False)
+    x = db.Column(db.Float, nullable=False)
+    y = db.Column(db.Float, nullable=False)
+    z = db.Column(db.Float, nullable=False)
+    result = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    
 # Create the database tables
 with app.app_context():
     db.create_all()
@@ -76,12 +87,27 @@ class UserForm(FlaskForm):
         DataRequired(),
         Length(min=6, message="Password must be at least 6 characters long.")
     ])
+    submit = SubmitField(label='submit')
+
     
 class LoginForm(FlaskForm):
     username = StringField(label="Username", validators=[DataRequired()])
     password = PasswordField(label="Password", validators=[DataRequired()])
 
     submit = SubmitField(label='Login')
+
+
+class ResultForm(FlaskForm):
+    color = StringField("Color", validators=[DataRequired()])
+    cut = SelectField("Cut", choices=["Fair", "Good", "Very Good", "Premium", "Ideal"], validators=[DataRequired()])
+    clarity = StringField("Clarity", validators=[DataRequired()])
+    carat = FloatField("Carat", validators=[DataRequired()])
+    depth = FloatField("Depth", validators=[DataRequired()])
+    table = FloatField("Table", validators=[DataRequired()])
+    x = FloatField("X", validators=[DataRequired()])
+    y = FloatField("Y", validators=[DataRequired()])
+    z = FloatField("Z", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 # home page
 @app.route("/")
@@ -130,13 +156,17 @@ def login():
         password = form.password.data
 
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            # Log the user in using Flask-Login
-            login_user(user)
-            flash("Login successful!", "success")
-            return redirect(url_for("profile"))
+        if user:
+            if check_password_hash(user.password, password):
+                login_user(user)
+                flash("Login successful!", "success")
+                return redirect(url_for("profile"))
+            else:
+                print("Password mismatch")
         else:
-            flash("Invalid username or password", "danger")
+            print("User not found")
+
+        flash("Invalid username or password", "danger")
 
     if form.errors:
         for field, errors in form.errors.items():
@@ -145,10 +175,42 @@ def login():
 
     return render_template("login.html", form=form)
 
+
 @app.route("/profile")
 @login_required
 def profile():
     return render_template("profile.html")
+
+@app.route("/result", methods=["GET", "POST"])
+@login_required
+def result():
+    form = ResultForm()
+    if form.validate_on_submit():
+        color = form.color.data
+        cut = form.cut.data
+        clarity = form.clarity.data
+        carat = form.carat.data
+        depth = form.depth.data
+        table = form.table.data
+        x = form.x.data
+        y = form.y.data
+        z = form.z.data
+
+        # Simulate result calculation (replace with actual logic)
+        calculated_result = f"Estimated price for {carat} carat is $1000."
+
+        # Save the result
+        new_result = userResult(
+            color=color, cut=cut, clarity=clarity, carat=carat, depth=depth,
+            table=table, x=x, y=y, z=z, result=calculated_result, user_id=current_user.id
+        )
+        db.session.add(new_result)
+        db.session.commit()
+
+        flash("Result calculated and saved!", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("result.html", form=form)
 
 
 @app.route("/logout")

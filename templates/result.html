@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculate Result</title>
+</head>
+<body>
+    <h1>Calculate Diamond Price</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul>
+        {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.color.label }}: {{ form.color() }}
+            {% if form.color.errors %}
+            <ul>
+                {% for error in form.color.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.cut.label }}: {{ form.cut() }}
+            {% if form.cut.errors %}
+            <ul>
+                {% for error in form.cut.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.clarity.label }}: {{ form.clarity() }}
+            {% if form.clarity.errors %}
+            <ul>
+                {% for error in form.clarity.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.carat.label }}: {{ form.carat() }}
+            {% if form.carat.errors %}
+            <ul>
+                {% for error in form.carat.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.depth.label }}: {{ form.depth() }}
+            {% if form.depth.errors %}
+            <ul>
+                {% for error in form.depth.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.table.label }}: {{ form.table() }}
+            {% if form.table.errors %}
+            <ul>
+                {% for error in form.table.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.x.label }}: {{ form.x() }}
+            {% if form.x.errors %}
+            <ul>
+                {% for error in form.x.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.y.label }}: {{ form.y() }}
+            {% if form.y.errors %}
+            <ul>
+                {% for error in form.y.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.z.label }}: {{ form.z() }}
+            {% if form.z.errors %}
+            <ul>
+                {% for error in form.z.errors %}
+                <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+    <a href="{{ url_for('profile') }}">Back to Profile</a>
+</body>
+</html>
