@@ -1,15 +1,13 @@
 # libraries
 from flask import Flask, render_template, url_for, redirect, flash # for app
 from flask_sqlalchemy import SQLAlchemy # for database
-from flask_wtf import FlaskForm # for input data
-from wtforms import StringField, PasswordField, SubmitField, FloatField, SelectField
-from wtforms.validators import DataRequired, Regexp, Length, Email
 from flask_wtf.csrf import CSRFProtect # for url security
 from werkzeug.security import generate_password_hash, check_password_hash # for password security
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user # user session management
 import os
 from datetime import datetime
-
+from forms import UserForm, LoginForm, ResultForm
+from model import predict_price
 
 # app setup
 app = Flask(__name__)
@@ -67,47 +65,7 @@ with app.app_context():
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-class UserForm(FlaskForm):
-    fullname = StringField(label="Full Name", validators=[
-        DataRequired(),
-        Length(max=100, message="Full name must be under 100 characters.")
-    ])
-    username = StringField(label="Username", validators=[
-        DataRequired(),
-        Regexp(
-            regex="^[a-zA-Z0-9_]{3,10}$",
-            message="Username must be between 3 and 10 characters and can only contain letters, numbers, and underscores."
-        )
-    ])
-    email = StringField(label="Email", validators=[
-        DataRequired(),
-        Email(message="Please enter a valid email address.")
-    ])
-    password = PasswordField(label="Password", validators=[
-        DataRequired(),
-        Length(min=6, message="Password must be at least 6 characters long.")
-    ])
-    submit = SubmitField(label='submit')
 
-    
-class LoginForm(FlaskForm):
-    username = StringField(label="Username", validators=[DataRequired()])
-    password = PasswordField(label="Password", validators=[DataRequired()])
-
-    submit = SubmitField(label='Login')
-
-
-class ResultForm(FlaskForm):
-    color = StringField("Color", validators=[DataRequired()])
-    cut = SelectField("Cut", choices=["Fair", "Good", "Very Good", "Premium", "Ideal"], validators=[DataRequired()])
-    clarity = StringField("Clarity", validators=[DataRequired()])
-    carat = FloatField("Carat", validators=[DataRequired()])
-    depth = FloatField("Depth", validators=[DataRequired()])
-    table = FloatField("Table", validators=[DataRequired()])
-    x = FloatField("X", validators=[DataRequired()])
-    y = FloatField("Y", validators=[DataRequired()])
-    z = FloatField("Z", validators=[DataRequired()])
-    submit = SubmitField("Submit")
 
 # home page
 @app.route("/")
@@ -186,6 +144,7 @@ def profile():
 def result():
     form = ResultForm()
     if form.validate_on_submit():
+
         color = form.color.data
         cut = form.cut.data
         clarity = form.clarity.data
@@ -195,9 +154,18 @@ def result():
         x = form.x.data
         y = form.y.data
         z = form.z.data
+        input_data = {
+            "color": color,
+            "cut": cut,
+            "clarity": clarity,
+            "carat": carat,
+            "depth": depth,
+            "table": table,
+            "x": x,
+            "y": y,
+            "z": z}
 
-        # Simulate result calculation (replace with actual logic)
-        calculated_result = f"Estimated price for {carat} carat is $1000."
+        calculated_result = predict_price(input_data)
 
         # Save the result
         new_result = userResult(
