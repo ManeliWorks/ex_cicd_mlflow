@@ -3,7 +3,8 @@ name: CI/CD for Flask Application
 on:
   push:
     branches:
-      - [main, Maneli]
+      - main
+      - Maneli
   pull_request:
     branches:
       - main
