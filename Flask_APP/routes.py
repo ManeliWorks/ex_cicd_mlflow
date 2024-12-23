@@ -6,23 +6,29 @@ from .forms import UserForm, LoginForm, ResultForm
 from .model import predict_price
 from . import login_manager
 import pandas as pd
+
 main = Blueprint("main", __name__)
+
 
 # store user session information
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 login_manager.login_view = "main.login"
+
 
 @main.route("/")
 def home():
     return render_template("home.html")
 
+
 @main.route("/register", methods=["GET", "POST"])
 def register():
     form = UserForm()
     if form.validate_on_submit():
+        fullname = form.fullname.data
         username = form.username.data
         email = form.email.data
         password = generate_password_hash(form.password.data)
@@ -30,18 +36,21 @@ def register():
         if User.query.filter_by(username=username).first():
             flash("Username already taken.", "danger")
             return redirect(url_for("main.register"))
-        
+
         if User.query.filter_by(email=email).first():
             flash("Email already registered.", "danger")
             return redirect(url_for("main.register"))
 
-        user = User(username=username, email=email, password=password)
+        user = User(
+            fullname=fullname, username=username, email=email, password=password
+        )
         db.session.add(user)
         db.session.commit()
         flash("Registration successful!", "success")
         return redirect(url_for("main.login"))
-    
+
     return render_template("register.html", form=form)
+
 
 @main.route("/login", methods=["GET", "POST"])
 def login():
@@ -55,10 +64,12 @@ def login():
         flash("Invalid username or password.", "danger")
     return render_template("login.html", form=form)
 
+
 @main.route("/profile")
 @login_required
 def profile():
     return render_template("profile.html")
+
 
 @main.route("/result", methods=["GET", "POST"])
 @login_required
@@ -74,7 +85,7 @@ def result():
             "table": form.table.data,
             "x": form.x.data,
             "y": form.y.data,
-            "z": form.z.data
+            "z": form.z.data,
         }
 
         InputData = pd.DataFrame(input_data, index=[0])
@@ -85,6 +96,7 @@ def result():
         flash("Result saved!", "success")
         return redirect(url_for("main.profile"))
     return render_template("result.html", form=form)
+
 
 @main.route("/logout")
 @login_required

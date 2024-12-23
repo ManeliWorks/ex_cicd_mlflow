@@ -2,14 +2,16 @@ from . import db
 from flask_login import UserMixin
 from datetime import datetime
 
+
 class User(db.Model, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    fullname = db.Column(db.String(100), nullable=False)
+    fullname = db.Column(db.String(100), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    result = db.relationship("userResult", backref='author', lazy=True)
+    result = db.relationship("userResult", backref="author", lazy=True)
+
 
 class userResult(db.Model):
     __tablename__ = "user_result"
@@ -24,5 +26,5 @@ class userResult(db.Model):
     x = db.Column(db.Float, nullable=False)
     y = db.Column(db.Float, nullable=False)
     z = db.Column(db.Float, nullable=False)
-    result = db.Column(db.String(100), nullable=False)
+    result = db.Column(db.Float, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
