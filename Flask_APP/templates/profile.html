@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    <h1>Welcome, {{ current_user.fullname }}</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul>
+        {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <nav>
+        <a href="{{ url_for('main.result') }}">Calculate Result</a> |
+        <a href="{{ url_for('main.logout') }}">Logout</a>
+    </nav>
+
+    <h2>Your Results</h2>
+    <table border="1">
+        <tr>
+            <th>Timestamp</th>
+            <th>Color</th>
+            <th>Cut</th>
+            <th>Clarity</th>
+            <th>Carat</th>
+            <th>Result</th>
+        </tr>
+        {% for record in current_user.result %}
+        <tr>
+            <td>{{ record.timestamp }}</td>
+            <td>{{ record.color }}</td>
+            <td>{{ record.cut }}</td>
+            <td>{{ record.clarity }}</td>
+            <td>{{ record.carat }}</td>
+            <td>{{ record.result }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

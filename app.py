@@ -1,13 +1,23 @@
 # libraries
-from flask import Flask, request, render_template, url_for, redirect, flash # for app
-from flask_sqlalchemy import SQLAlchemy # for database
-from flask_wtf import FlaskForm # for input data
-from wtforms import StringField, PasswordField, SubmitField # take this data as form
+from flask import Flask, request, render_template, url_for, redirect, flash  # for app
+from flask_sqlalchemy import SQLAlchemy  # for database
+from flask_wtf import FlaskForm  # for input data
+from wtforms import StringField, PasswordField, SubmitField  # take this data as form
 from wtforms.validators import DataRequired, Regexp, Length, Email
-from flask_wtf.csrf import CSRFProtect # for url security
-from werkzeug.security import generate_password_hash, check_password_hash # for password security
+from flask_wtf.csrf import CSRFProtect  # for url security
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash,
+)  # for password security
 from werkzeug.utils import secure_filename
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user # user session management
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    login_user,
+    login_required,
+    logout_user,
+    current_user,
+)  # user session management
 import uuid
 import os
 
@@ -17,19 +27,20 @@ app = Flask(__name__)
 csrf = CSRFProtect(app)
 
 # create database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'sqlite:///database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", default=os.urandom(24))
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URI", "sqlite:///database.db"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", default=os.urandom(24))
 
 # login management
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'  # redirect to login page if not logged in
-
-
+login_manager.login_view = "login"  # redirect to login page if not logged in
 
 
 db = SQLAlchemy(app)
+
 
 # User Model for SQLAlchemy
 class User(db.Model, UserMixin):
@@ -45,43 +56,60 @@ class User(db.Model, UserMixin):
         self.fullname = fullname
         self.username = username
         self.email = email
-        self.password = generate_password_hash(password)  
+        self.password = generate_password_hash(password)
+
 
 # Create the database tables
 with app.app_context():
     db.create_all()
+
 
 # store user session information
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 class UserForm(FlaskForm):
-    fullname = StringField(label="Full Name", validators=[
-        DataRequired(),
-        Length(max=100, message="Full name must be under 100 characters.")
-    ])
-    username = StringField(label="Username", validators=[
-        DataRequired(),
-        Regexp(
-            regex="^[a-zA-Z0-9_]{3,10}$",
-            message="Username must be between 3 and 10 characters and can only contain letters, numbers, and underscores."
-        )
-    ])
-    email = StringField(label="Email", validators=[
-        DataRequired(),
-        Email(message="Please enter a valid email address.")
-    ])
-    password = PasswordField(label="Password", validators=[
-        DataRequired(),
-        Length(min=6, message="Password must be at least 6 characters long.")
-    ])
-    
+    fullname = StringField(
+        label="Full Name",
+        validators=[
+            DataRequired(),
+            Length(max=100, message="Full name must be under 100 characters."),
+        ],
+    )
+    username = StringField(
+        label="Username",
+        validators=[
+            DataRequired(),
+            Regexp(
+                regex="^[a-zA-Z0-9_]{3,10}$",
+                message="Username must be between 3 and 10 characters and can only contain letters, numbers, and underscores.",
+            ),
+        ],
+    )
+    email = StringField(
+        label="Email",
+        validators=[
+            DataRequired(),
+            Email(message="Please enter a valid email address."),
+        ],
+    )
+    password = PasswordField(
+        label="Password",
+        validators=[
+            DataRequired(),
+            Length(min=6, message="Password must be at least 6 characters long."),
+        ],
+    )
+
+
 class LoginForm(FlaskForm):
     username = StringField(label="Username", validators=[DataRequired()])
     password = PasswordField(label="Password", validators=[DataRequired()])
 
-    submit = SubmitField(label='Login')
+    submit = SubmitField(label="Login")
+
 
 # home page
 @app.route("/")
@@ -107,7 +135,9 @@ def register():
             flash("Email already registered, please use a different one.", "danger")
             return redirect(url_for("register"))
         password_hash = generate_password_hash(password)
-        new_user = User(fullname=fullname, username=username, email=email, password=password_hash)
+        new_user = User(
+            fullname=fullname, username=username, email=email, password=password_hash
+        )
         db.session.add(new_user)
         db.session.commit()
 
@@ -145,6 +175,7 @@ def login():
 
     return render_template("login.html", form=form)
 
+
 @app.route("/profile")
 @login_required
 def profile():
@@ -160,4 +191,4 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True ,host="0.0.0.0", port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8080)
