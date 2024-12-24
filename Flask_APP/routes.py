@@ -5,6 +5,7 @@ from .database_models import db, User, userResult
 from .forms import UserForm, LoginForm, ResultForm
 from .model import predict_price
 from . import login_manager
+import pandas as pd
 main = Blueprint("main", __name__)
 
 # store user session information
@@ -12,7 +13,7 @@ main = Blueprint("main", __name__)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-login_manager.login_view = "login"
+login_manager.login_view = "main.login"
 
 @main.route("/")
 def home():
@@ -73,9 +74,11 @@ def result():
             "table": form.table.data,
             "x": form.x.data,
             "y": form.y.data,
-            "z": form.z.data,
+            "z": form.z.data
         }
-        result = predict_price(input_data)
+
+        InputData = pd.DataFrame(input_data, index=[0])
+        result = predict_price(InputData)
         new_result = userResult(**input_data, result=result, user_id=current_user.id)
         db.session.add(new_result)
         db.session.commit()
