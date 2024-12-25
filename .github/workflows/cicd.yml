@@ -1,10 +1,14 @@
-name: CI/CD for Flask Application
+name: CI/CD for Diamond Price Estimator Application
+
+env:
+  SERVICE_NAME: diamond-price-estimator
+  PROJECT_ID: diamond-app-445820
+  DOCKER_IMAGE_URL: europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app/diamond-app
 
 on:
   push:
     branches:
       - main
-      - Maneli
   pull_request:
     branches:
       - main
@@ -20,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: 3.9
 
       - name: Install dependencies
         run: |
@@ -30,10 +34,42 @@ jobs:
       # - name: Run tests
       #   run: pytest
 
-      - name: Build Docker image
-        run: |
-          docker build -t flask-app .
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
 
-      - name: Deploy to cloud
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Google Cloud Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_KEY }}
+
+      - name: Configure GCP project
         run: |
-          echo "Deployment step placeholder. Add your deployment script or tool here."
+          gcloud config set project ${{ env.PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker europe-west10-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t diamond-app:latest .
+          docker tag diamond-app:latest ${{ env.DOCKER_IMAGE_URL }}:latest
+          docker push ${{ env.DOCKER_IMAGE_URL }}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          echo "SERVICE_NAME: ${{ env.SERVICE_NAME }}"
+          echo "DOCKER_IMAGE_URL: ${{ env.DOCKER_IMAGE_URL }}"
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.DOCKER_IMAGE_URL }}:latest \
+            --platform managed \
+            --region europe-west10 \
+            --allow-unauthenticated
