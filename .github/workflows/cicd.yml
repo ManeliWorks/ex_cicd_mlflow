@@ -62,7 +62,7 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           docker build -t diamond-app:latest .
-          docker tag diamon-app:latest europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app/diamond-app:latest
+          docker tag diamond-app:latest europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app/diamond-app:latest
           docker push europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app/diamond-app:latest
 
 
