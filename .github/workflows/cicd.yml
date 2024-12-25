@@ -63,8 +63,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ env.DOCKER_IMAGE_URL }}:latest .
-          docker push ${{ env.DOCKER_IMAGE_URL }}:latest
+          docker build -t ${{ env.DOCKER_IMAGE_URL }} .
+          docker push ${{ env.DOCKER_IMAGE_URL }}
 
 
       # - name: Build and Push Docker Image
