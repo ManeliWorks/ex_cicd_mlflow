@@ -3,8 +3,6 @@ name: CI/CD for Diamond Price Estimator Application
 env:
   SERVICE_NAME: diamond price estimator
   PROJECT_ID: diamond-app-445820
-  DOCKER_IMAGE_URL: europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app:latest
-
 on:
   push:
     branches:
@@ -63,8 +61,9 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ env.DOCKER_IMAGE_URL }} .
-          docker push ${{ env.DOCKER_IMAGE_URL }}
+          docker build -t diamond-app:latest .
+          docker tag diamon-app:latest europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app/diamond-app:latest
+          docker push europe-west10-docker.pkg.dev/diamond-app-445820/diamond-app/diamond-app:latest
 
 
       # - name: Build and Push Docker Image
