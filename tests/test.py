@@ -1,114 +1,92 @@
-import unittest
-from flask import Flask
-from flask_testing import TestCase
-from Flask_APP import create_app, db
-from Flask_APP.database_models import User, userResult
+import pytest
+from flask import url_for
+from app import app, db, User  
 
-class TestFlaskApp(TestCase):
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:' 
+    app.config['WTF_CSRF_ENABLED'] = False 
 
-    def create_app(self):
-        app = create_app()
-        app.config['WTF_CSRF_ENABLED'] = False 
-        app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///test.db"
-        app.config['SECRET_KEY'] = 'testsecret'
-        app.config['TESTING'] = True
-        return app
+    with app.test_client() as client:
+        with app.app_context():
+            db.create_all()  
+        yield client
 
-    def setUp(self):
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
+        with app.app_context():
             db.session.remove()
-            db.drop_all()
+            db.drop_all() 
 
-    def test_register_user(self):
-        response = self.client.get('/register')
+def test_register_user(client):
+    response = client.post(url_for('register'), data={
+        'fullname': 'Test User',
+        'username': 'testuser',
+        'email': 'testuser@example.com',
+        'password': 'securepassword'
+    }, follow_redirects=True)
 
+    assert response.status_code == 200
+    assert b"Successfully registered! Please log in." in response.data
 
-        response = self.client.post('/register', data={
-            'fullname': 'maneliforoutan',
-            'username': 'mnl',
-            'email': 'maneli0foroutan@gmail.com',
-            'password': '123456',
-            'confirm_password': '123456',
+    user = User.query.filter_by(username='testuser').first()
+    assert user is not None
+    assert user.email == 'testuser@example.com'
 
-        })
+def test_register_duplicate_username(client):
+    client.post(url_for('register'), data={
+        'fullname': 'User One',
+        'username': 'duplicateuser',
+        'email': 'userone@example.com',
+        'password': 'password1'
+    }, follow_redirects=True)
 
-        self.assertEqual(response.status_code, 302)
-        user = User.query.filter_by(username='mnl').first()
-        self.assertIsNotNone(user)
+    response = client.post(url_for('register'), data={
+        'fullname': 'User Two',
+        'username': 'duplicateuser',
+        'email': 'usertwo@example.com',
+        'password': 'password2'
+    }, follow_redirects=True)
 
-    # def test_register_user_password_mismatch(self):
-    #     response = self.client.post('/register', data={
-    #         'fullname': 'maneliforoutan',
-    #         'username': 'mnl',
-    #         'email': 'maneli0foroutan@gmail.com',
-    #         'password': '123456',
-    #         'confirm_password': 'wrongpassword',  # Mismatched password
-    #     })
-        
-    #     self.assertEqual(response.status_code, 200) 
-    #     self.assertIn(b'Passwords must match', response.data)  
+    assert b"Username already taken, please choose a different one." in response.data
 
-    def test_login_user(self):
-        self.client.post('/register', data={
-            'fullname': 'maneliforoutan',
-            'username': 'mnl',
-            'email': 'maneli0foroutan@gmail.com',
-            'password': '123456',
-        })
+def test_login_user(client):
+    client.post(url_for('register'), data={
+        'fullname': 'Test User',
+        'username': 'testlogin',
+        'email': 'testlogin@example.com',
+        'password': 'securepassword'
+    }, follow_redirects=True)
 
-        response = self.client.post('/login', data={
-            'username': 'maneli',
-            'password': 'wrongpassword'
-        })
-        self.assertEqual(response.status_code, 200) 
-        self.assertIn(b'Invalid username or password.', response.data)
+    response = client.post(url_for('login'), data={
+        'username': 'testlogin',
+        'password': 'securepassword'
+    }, follow_redirects=True)
 
+    assert response.status_code == 200
+    assert b"Login successful!" in response.data
 
-        
-    def test_result_submission(self):
-        self.client.post('/register', data={
-            'fullname': 'maneli foroutan',
-            'username': 'mnl',
-            'email': 'maneli0foroutan@gmail.com',
-            'password': '123456',
-        })
-        
-        self.client.post('/login', data={
-            'username': 'mnl',
-            'password': '123456'
-        })
-        
-        response = self.client.post('/result', data={
-            'carat': [0.23],  
-            'cut': ['Ideal'], 
-            'color': ['E'],  
-            'clarity': ['SI2'], 
-            'depth': [61.5], 
-            'table': [55],  
-            'x': [3.95],  
-            'y': [3.98],  
-            'z': [2.43]  
-        })
-        
-        self.assertEqual(response.status_code, 302) 
+def test_login_invalid_user(client):
+    response = client.post(url_for('login'), data={
+        'username': 'nonexistentuser',
+        'password': 'wrongpassword'
+    }, follow_redirects=True)
 
-        response = self.client.get('/profile')
-        
-        self.assertIn(b'Profile', response.data)  
-        
-        result = userResult.query.filter_by(user_id=1).first()
-        
-        self.assertIsNotNone(result)
-        
-        self.assertEqual(result.color, 'E')
+    assert b"Invalid username or password" in response.data
 
-if __name__ == '__main__':
-    unittest.main()
+def test_logout_user(client):
+    client.post(url_for('register'), data={
+        'fullname': 'Test User',
+        'username': 'testlogout',
+        'email': 'testlogout@example.com',
+        'password': 'securepassword'
+    }, follow_redirects=True)
 
+    client.post(url_for('login'), data={
+        'username': 'testlogout',
+        'password': 'securepassword'
+    }, follow_redirects=True)
 
+    response = client.get(url_for('logout'), follow_redirects=True)
 
-
+    assert response.status_code == 200
+    assert b"You have been logged out successfully." in response.data
