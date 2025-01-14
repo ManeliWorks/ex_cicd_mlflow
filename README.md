@@ -1,4 +1,5 @@
 # Diamond Price Estimator
+![image](demo.gif)
 
 ## Our team:
 - [ Maneli Foroutan     @maneli_foroutan]
